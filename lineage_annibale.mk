@@ -30,3 +30,8 @@ PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 PRODUCT_BUILD_PROP_OVERRIDES += \
     BuildDesc="annibale-user 16 BP2A.250605.031.A3 OS3.0.301.0.WPKMIXM release-keys" \
     BuildFingerprint="POCO/annibale_global/annibale:16/BP2A.250605.031.A3/OS3.0.301.0.WPKMIXM:user/release-keys"
+
+# Annibale is standalone; do not analyze the unrelated Haotian common trees.
+PRODUCT_SOURCE_ROOT_DIRS += \
+    -device/xiaomi/sm8750-common \
+    -vendor/xiaomi/sm8750-common

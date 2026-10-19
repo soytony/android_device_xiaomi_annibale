@@ -159,3 +159,7 @@
 /vendor/bin/nv_mac u:object_r:vendor_wcnss_service_exec:s0
 /data/vendor/mac_addr(/.*)? u:object_r:vendor_mac_vendor_data_file:s0
 /data/vendor/mbnconfig(/.*)? u:object_r:vendor_firmware_data_file:s0
+
+# Dolby Atmos
+/vendor/bin/hw/vendor\.dolby\.dms\.service u:object_r:hal_aidl_dms_default_exec:s0
+/data/vendor/dolby(/.*)? u:object_r:vendor_dolby_file:s0

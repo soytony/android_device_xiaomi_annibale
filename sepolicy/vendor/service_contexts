@@ -36,3 +36,6 @@ vendor.qti.sla.service.ISlaAIDLService/default u:object_r:hal_slaaidlservice_ser
 
 # Touchfeature
 vendor.xiaomi.hw.touchfeature.ITouchFeature/default u:object_r:hal_touchfeature_xiaomi_service:s0
+
+# Dolby Atmos
+vendor.dolby.dms.IDms/default u:object_r:hal_aidl_dms_service:s0

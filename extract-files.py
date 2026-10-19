@@ -274,6 +274,17 @@ blob_fixups: blob_fixups_user_type = {
             'libaudio_aidl_conversion_common_ndk_prebuilt.so'
         ),
 
+    # Dolby uses the same stock audio ABI adaptation as the primary audio HAL.
+    'vendor/lib64/soundfx/libhwdapaidl.so': blob_fixup()
+        .replace_needed(
+            'android.media.audio.common.types-V6-ndk.so',
+            'android.media.audio.common.types-V3-ndk.so'
+        )
+        .replace_needed(
+            'libaudio_aidl_conversion_common_ndk.so',
+            'libaudio_aidl_conversion_common_ndk_prebuilt.so'
+        ),
+
     'vendor/lib64/hw/libaudioeffecthal.qti.so': blob_fixup()
         .replace_needed(
             'android.media.audio.common.types-V6-ndk.so',

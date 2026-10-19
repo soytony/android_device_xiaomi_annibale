@@ -1,4 +1,12 @@
 <compatibility-matrix version="9.0" type="framework">
+    <hal format="aidl" optional="true">
+        <name>vendor.dolby.dms</name>
+        <version>1</version>
+        <interface>
+            <name>IDms</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl">
         <name>android.hardware.media.c2</name>
         <version>1.0</version>

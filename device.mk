@@ -507,3 +507,6 @@ PRODUCT_COPY_FILES += \
 
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/annibale/annibale-vendor.mk)
+
+# Lunaris control surface backed by the stock 64-bit annibale Dolby AIDL HAL.
+$(call inherit-product, $(LOCAL_PATH)/lunaris-dolby.mk)
