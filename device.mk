@@ -403,6 +403,8 @@ PRODUCT_SOONG_NAMESPACES += \
 $(call soong_config_set,rfs,mpss_firmware_symlink_target,modem_firmware)
 
 PRODUCT_PACKAGES += \
+    annibale-telephony \
+    annibale-telephony-permissions \
     extphonelib \
     extphonelib-product \
     extphonelib.xml \

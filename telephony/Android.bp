@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: Apache-2.0
+java_library {
+    name: "annibale-telephony",
+    srcs: ["src/**/*.java"],
+    platform_apis: true,
+    installable: true,
+    system_ext_specific: true,
+    libs: [
+        "telephony-common",
+        "extphonelib",
+        "com.android.internal.telephony.flags.telephony-flags-aconfig-java-export",
+    ],
+}
+
+// TeleService is on /system: its privileged allowlist must be on the same partition.
+prebuilt_etc {
+    name: "annibale-telephony-permissions",
+    src: "annibale-telephony-permissions.xml",
+    filename_from_src: true,
+    sub_dir: "permissions",
+}

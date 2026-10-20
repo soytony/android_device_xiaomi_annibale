@@ -1594,6 +1594,8 @@
         <boolean name="always_send_plmn_name_bool" value="true" />
     </carrier_config>
     <carrier_config mcc="460" mnc="01">
+        <!-- Preserve basic 5G states; expose the modem advanced state as 5G+. -->
+        <string name="5g_icon_configuration_string">connected_mmwave:5G_Plus,connected:5G,connected_rrc_idle:5G,not_restricted_rrc_idle:5G,not_restricted_rrc_con:5G</string>
         <int name="eutran_rsrp_hysteresis_db_int" value="1" />
         <boolean name="use_only_rsrp_for_lte_signal_bar_bool" value="true" />
         <int-array name="lte_rsrp_thresholds_int_array" num="4">
@@ -1874,6 +1876,8 @@
         <boolean name="always_send_plmn_name_bool" value="true" />
     </carrier_config>
     <carrier_config mcc="460" mnc="06">
+        <!-- Preserve basic 5G states; expose the modem advanced state as 5G+. -->
+        <string name="5g_icon_configuration_string">connected_mmwave:5G_Plus,connected:5G,connected_rrc_idle:5G,not_restricted_rrc_idle:5G,not_restricted_rrc_con:5G</string>
         <int name="eutran_rsrp_hysteresis_db_int" value="1" />
         <boolean name="use_only_rsrp_for_lte_signal_bar_bool" value="true" />
         <int-array name="lte_rsrp_thresholds_int_array" num="4">
@@ -2071,6 +2075,8 @@
         <boolean name="always_send_plmn_name_bool" value="true" />
     </carrier_config>
     <carrier_config mcc="460" mnc="09">
+        <!-- Preserve basic 5G states; expose the modem advanced state as 5G+. -->
+        <string name="5g_icon_configuration_string">connected_mmwave:5G_Plus,connected:5G,connected_rrc_idle:5G,not_restricted_rrc_idle:5G,not_restricted_rrc_con:5G</string>
         <int name="eutran_rsrp_hysteresis_db_int" value="1" />
         <boolean name="use_only_rsrp_for_lte_signal_bar_bool" value="true" />
         <int-array name="lte_rsrp_thresholds_int_array" num="4">
