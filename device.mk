@@ -304,14 +304,15 @@ PRODUCT_PACKAGES += \
     CarrierConfigResCommon \
     FrameworksResCommon \
     FrameworksResOverlayEsim \
-    FrameworksResTarget \
+    FrameworksResAnnibale \
     LineageApertureOverlay \
     LineageSDKOverlay \
     LineageSettingsOverlay \
     NfcOverlayAnnibale \
-    SecureElementResTarget \
+    SecureElementResAnnibale \
     SettingsResCommon \
     SystemUIResCommon \
+    SystemUIResAnnibale \
     TelecommResCommon \
     TelephonyResCommon \
     WifiResCommon \

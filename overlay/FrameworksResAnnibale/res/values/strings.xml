@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <!-- Physical front-camera hole: display center X, center Y 82 px, radius 38 px. -->
+    <string name="config_mainBuiltInDisplayCutout">M 38,82 A 38,38 0 0 1 0,120 A 38,38 0 0 1 -38,82 A 38,38 0 0 1 0,44 A 38,38 0 0 1 38,82 Z</string>
+    <!-- Keep the larger logical exclusion area used to align status-bar content. -->
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -38,0 L 38,0 L 38,164 L -38,164 Z</string>
+    <!-- Use a compact separator between multiple SIM carrier names on keyguard. -->
+    <string name="kg_text_message_separator" translatable="false"> | </string>
+
+</resources>
