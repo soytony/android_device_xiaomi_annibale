@@ -81,6 +81,7 @@ prebuilt_etc {
     src: "etc/init.annibale.rc",
     sub_dir: "init",
     vendor: true,
+    required: ["init.annibale.camera.rc"],
 }
 
 prebuilt_etc {
@@ -122,5 +123,19 @@ prebuilt_etc {
     name: "ueventd.qcom.rc",
     filename: "ueventd.rc",
     src: "etc/ueventd.qcom.rc",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "init.annibale.camera.rc",
+    src: "etc/init.annibale.camera.rc",
+    sub_dir: "init",
+    system_ext_specific: true,
+}
+
+prebuilt_etc {
+    name: "init.annibale.misys.rc",
+    src: "etc/init.annibale.misys.rc",
+    sub_dir: "init",
     vendor: true,
 }

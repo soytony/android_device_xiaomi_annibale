@@ -1,0 +1,14 @@
+{
+  "firmware": "OS3.0.307.0.WPKCNXM",
+  "stock_apk": "product/priv-app/MiuiCamera/MiuiCamera.apk",
+  "stock_sha256": "852de06604764d15b591e9c31863370f903545e14765d549eba4b6a953bf6b6f",
+  "patched_apk_sha256": "bcf10fc9c40187e52d57e897c3246ca6073deb2a921e83f829848f034d5b523c",
+  "patch_script": "device/xiaomi/annibale/camera/patch_camera.py",
+  "native_library": "system_ext/lib64/libcamera_algoup_jni.xiaomi.so",
+  "native_sha256": "b1cfe6702e8da2427027c395e3b2c7efac1857917f041e7697f15b380802a184",
+  "stock_signer_sha256": "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025",
+  "build_signer": "ROM platform key; not stock Xiaomi key",
+  "integration_partition": "system_ext",
+  "vendor_key_enumeration": "Preserve generic capabilities; admit only registered filename, QCFA sensor and zoom-ratio capability keys",
+  "adaptive_icon": "Append same-signature AnnibaleCameraIcon overlayable policy for mipmap/eji; device RRO supplies adaptive and monochrome layers"
+}

@@ -2,3 +2,13 @@ allow platform_app_36 hal_postprocservice_service:service_manager find;
 allow platform_app_36 proc_pressure_cpu:file { getattr open read write };
 allow platform_app_36 proc_pressure_io:file { getattr open read write };
 allow platform_app_36 proc_pressure_mem:file { getattr open read write };
+
+# HyperOS Camera (target SDK <= 36) registers its still-capture callback with
+# BGService in the stock camera provider, outside the cameraserver connection.
+allow platform_app_36 hal_aidlbgservice_service:service_manager find;
+binder_call(platform_app_36, hal_camera_default)
+binder_call(hal_camera_default, platform_app_36)
+
+# MIUI Camera imports watermark/LUT data through the stock MiSys file service.
+allow platform_app_36 hal_hypsys_vendor_service:service_manager find;
+binder_call(platform_app_36, hal_hypsys_vendor)

@@ -17,6 +17,16 @@ from extract_utils.main import (
     ExtractUtilsModule,
 )
 
+from pathlib import Path
+import subprocess
+import sys
+
+
+def patch_miui_camera(ctx, file, file_path, *args, **kwargs):
+    subprocess.run([sys.executable,
+        str(Path(ctx.module_dir) / 'camera/patch_camera.py'), file_path, file_path], check=True)
+
+
 namespace_imports = [
     'device/xiaomi/annibale',
     'hardware/qcom-caf/sm8750',
@@ -44,6 +54,7 @@ lib_fixups: lib_fixups_user_type = {
 }
 
 blob_fixups: blob_fixups_user_type = {
+    'product/priv-app/MiuiCamera/MiuiCamera.apk': blob_fixup().call(patch_miui_camera),
     'odm/bin/hw/vendor.xiaomi.sensor.citsensorservice.aidl': blob_fixup()
         .replace_needed(
             'android.hardware.graphics.common-V5-ndk.so',
@@ -355,6 +366,43 @@ blob_fixups: blob_fixups_user_type = {
             'android.media.audio.common.types-V3-ndk.so'
         ),
 }  # fmt: skip
+
+# Keep the stock V1 Codec2 dependency closure separate from platform V2.
+blob_fixups[(
+    'vendor/bin/hw/vendor.qti.media.c2@1.0-service',
+    'vendor/bin/hw/vendor.qti.media.c2audio@1.0-service',
+    'vendor/lib64/libcodec2_aidl_annibale.so',
+    'vendor/lib64/libcodec2_hal_common_annibale.so',
+    'vendor/lib64/libcodec2_hidl_plugin_annibale.so',
+    'vendor/lib64/libcodec2_vndk_annibale.so',
+    'vendor/lib64/libqc2audio_base.so',
+    'vendor/lib64/libqc2audio_basecodec.so',
+    'vendor/lib64/libqc2audio_core.so',
+    'vendor/lib64/libqc2audio_hooks.so',
+    'vendor/lib64/libqc2audio_hwaudiocodec.so',
+    'vendor/lib64/libqc2audio_platform.so',
+    'vendor/lib64/libqc2audio_swaudiocodec.so',
+    'vendor/lib64/libqc2audio_utils.so',
+    'vendor/lib64/libqcodec2_base.so',
+    'vendor/lib64/libqcodec2_basecodec.so',
+    'vendor/lib64/libqcodec2_core.so',
+    'vendor/lib64/libqcodec2_cvpfilter.so',
+    'vendor/lib64/libqcodec2_filterbase.so',
+    'vendor/lib64/libqcodec2_hooks.so',
+    'vendor/lib64/libqcodec2_imgtxrfilter.so',
+    'vendor/lib64/libqcodec2_mockfilter.so',
+    'vendor/lib64/libqcodec2_platform.so',
+    'vendor/lib64/libqcodec2_streaminteg_filter.so',
+    'vendor/lib64/libqcodec2_utils.so',
+    'vendor/lib64/libqcodec2_v4l2codec.so',
+    'vendor/lib64/libsamplefilterplugin.so',
+    'vendor/lib64/libstreamprocessor.so',
+    'vendor/lib64/libvideotxr.so',
+)] = blob_fixup() \
+    .replace_needed('libcodec2_aidl.so', 'libcodec2_aidl_annibale.so') \
+    .replace_needed('libcodec2_hidl_plugin.so', 'libcodec2_hidl_plugin_annibale.so') \
+    .replace_needed('libcodec2_vndk.so', 'libcodec2_vndk_annibale.so') \
+    .replace_needed('libcodec2_hal_common.so', 'libcodec2_hal_common_annibale.so')
 
 module = ExtractUtilsModule(
     'annibale',

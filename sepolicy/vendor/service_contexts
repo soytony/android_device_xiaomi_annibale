@@ -24,6 +24,10 @@ vendor.xiaomi.hardware.fx.tunnel.IMiFxTunnel/default u:object_r:vendor_hal_finge
 # HypSys
 xiaomi.system.hypsys.common.IHypSysSsi/default u:object_r:hal_hypsys_vendor_service:s0
 xiaomi.system.hypsys.common.IHypSysSsiIntl/default u:object_r:hal_hypsys_vendor_service:s0
+vendor.xiaomi.hardware.misys.common.IMiSysImpl/default u:object_r:hal_hypsys_vendor_service:s0
+vendor.xiaomi.hardware.misys.common.IHypSysIntl/default u:object_r:hal_hypsys_vendor_service:s0
+vendor.xiaomi.hardware.blackbox.IBlackboxImpl/default u:object_r:hal_hypsys_vendor_service:s0
+vendor.xiaomi.hardware.misys.core.IMiSysCore/default u:object_r:hal_misyscore_service:s0
 
 # Media
 vendor.xiaomi.hardware.mediaeventgatherservice.IMediaGather/default                       u:object_r:hal_mediaeventgatherservice_service:s0

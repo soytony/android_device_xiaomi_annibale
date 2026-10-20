@@ -1,0 +1,19 @@
+# The stock camera provider needs the framework AIDL sensor manager. WMS
+# registers a torch callback before SystemServer publishes that service;
+# exposing cameraserver then can deadlock policy initialization. Start it
+# after framework boot, when CameraManager's normal reconnect can succeed.
+service cameraserver /system/bin/cameraserver
+    override
+    disabled
+    class main
+    user cameraserver
+    group audio camera input drmrpc
+    ioprio rt 4
+    task_profiles CameraServiceCapacity MaxPerformance
+    rlimit rtprio 10 10
+    capabilities SYS_NICE
+    onrestart class_restart cameraWatchdog
+    interface aidl android.frameworks.cameraservice.service.ICameraService/default
+
+on property:sys.boot_completed=1
+    start cameraserver

@@ -7,3 +7,27 @@ binder_use(hal_hypsys_vendor)
 init_daemon_domain(hal_hypsys_vendor)
 
 allow hal_hypsys_vendor hal_hypsys_vendor_service:service_manager { add find };
+
+# The stock MiSys common implementation also serves camera watermark/LUT files.
+allow hal_hypsys_vendor vendor_camera_data_file:dir { create setattr rmdir rw_dir_perms };
+allow hal_hypsys_vendor vendor_camera_data_file:file create_file_perms;
+allow hal_hypsys_vendor camera_persist_file:dir create_dir_perms;
+allow hal_hypsys_vendor camera_persist_file:file create_file_perms;
+allow hal_hypsys_vendor mnt_vendor_file:dir search;
+get_prop(hal_hypsys_vendor, vendor_default_prop)
+get_prop(hal_hypsys_vendor, vendor_system_prop)
+binder_call(hal_hypsys_vendor, hal_hypsys_vendor)
+
+# MiSys common links and connects to the companion core service. Do not import
+# the stock diagnostic/block-device access: camera handoff needs none of it.
+type hal_misyscore_default, domain;
+type hal_misyscore_default_exec, exec_type, file_type, vendor_file_type;
+type hal_misyscore_service, hal_service_type, protected_service, service_manager_type;
+init_daemon_domain(hal_misyscore_default)
+binder_use(hal_misyscore_default)
+allow hal_misyscore_default hal_misyscore_service:service_manager { add find };
+allow hal_hypsys_vendor hal_misyscore_service:service_manager find;
+binder_call(hal_hypsys_vendor, hal_misyscore_default)
+
+# Camera passes shared-memory file descriptors for watermark assets.
+allow hal_hypsys_vendor platform_app_36:fd use;

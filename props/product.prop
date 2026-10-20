@@ -45,3 +45,7 @@ persist.vendor.qcom.bluetooth.pbap_pse_dynamic_version_upgrade=true
 remote_provisioning.enable_rkpd=true
 remote_provisioning.hostname=remoteprovisioning.googleapis.com
 remote_provisioning.strongbox.rkp_only=true
+
+# Camera reads this product property to expose Motion Photo.
+# This property cannot be loaded by vendor_init from ODM.
+ro.product.camera.livephoto.support=3

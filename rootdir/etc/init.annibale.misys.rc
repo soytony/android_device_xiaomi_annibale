@@ -1,0 +1,7 @@
+# Camera watermark/LUT handoff. Keep the stock service identity and avoid the
+# unrelated diagnostic and hardware actions in the stock hypsys_vendor.rc.
+service vendor.misys.common /vendor/bin/hypsys_vendor
+    class hal
+    user system
+    group system root log cache everybody media_rw debuggerd
+    interface aidl vendor.xiaomi.hardware.misys.common.IMiSysImpl/default

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<config>
+    <!-- The stock camera uses non-SDK Camera2/platform methods; scope access to this app. -->
+    <hidden-api-whitelisted-app package="com.android.camera" />
+    <install-in-user-type package="com.android.camera">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+</config>

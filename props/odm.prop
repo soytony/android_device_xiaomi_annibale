@@ -87,7 +87,6 @@ debug.config.video.p3.decode.support=true
 debug.config.video.p3.encode.support=true
 ro.camera.disableHeicUltraHDR=true
 ro.camerax.extensions.enabled=true
-ro.product.camera.livephoto.support=3
 ro.vendor.dynamiccamera.ability_level=2
 
 # Battery

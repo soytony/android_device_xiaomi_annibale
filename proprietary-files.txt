@@ -3095,6 +3095,12 @@ vendor/lib64/libsamplefilterplugin.so
 vendor/lib64/libvideotxr.so
 vendor/lib64/qti.video.utils.videobufferlayout.so
 
+# Stock V1 Codec2 providers: isolate their ABI from the platform V2 stack.
+vendor/lib64/libcodec2_aidl.so:vendor/lib64/libcodec2_aidl_annibale.so;FIX_SONAME
+vendor/lib64/libcodec2_hidl_plugin.so:vendor/lib64/libcodec2_hidl_plugin_annibale.so;FIX_SONAME
+vendor/lib64/libcodec2_vndk.so:vendor/lib64/libcodec2_vndk_annibale.so;FIX_SONAME
+vendor/lib64/libcodec2_hal_common.so:vendor/lib64/libcodec2_hal_common_annibale.so;FIX_SONAME
+
 # Media configs
 vendor/etc/media_codecs_performance_sun.xml
 vendor/etc/media_profiles_sun.xml
@@ -4130,3 +4136,18 @@ vendor/lib64/libspatializerparamstorage.so
 vendor/lib64/soundfx/libhwdapaidl.so
 vendor/lib64/vendor.dolby.dms-V1-ndk.so
 vendor/lib64/vendor.dolby.hardware.dms@2.0.so
+
+# HyperOS Camera (OS3.0.307.0.WPKCNXM; pinned input checked by camera/patch_camera.py)
+product/priv-app/MiuiCamera/MiuiCamera.apk;EXTRACT_ONLY;FILEGROUP=annibale_miuicamera_apk
+system_ext/lib64/libcamera_algoup_jni.xiaomi.so
+
+# MiSys camera data handoff (stock annibale OS3.0.307.0.WPKCNXM)
+vendor/etc/vintf/manifest/manifest_blackbox.xml|eb1e4423585e84c35d6993469a5323e327d4e6d9
+vendor/bin/hypsys_vendor|90ab9bd12af17e80b871f6e6ec5422fff0b134dc
+vendor/bin/hw/vendor.xiaomi.hardware.misys.core-service|7298e7a3de3203022701abf01b3a3f38b6a7e02d
+vendor/etc/vintf/manifest/vendor.xiaomi.hardware.misys.common.xml|09c4f57f5723fa4340b8d27d49c2cac77514dc0d
+vendor/etc/vintf/manifest/vendor.xiaomi.hardware.misys.core.xml|0134ce5dec96a4d1cd4f722f44ffd267129e843f
+vendor/etc/init/vendor.xiaomi.hardware.misys.core-service.rc|c14195922f1dda68a9e673b1eac1d2948eac2653
+vendor/lib64/vendor.xiaomi.hardware.misys.core-V1-ndk.so|641d1b765b6d8c2103d53a705bc7dbed2a1ed269
+vendor/lib64/vendor.xiaomi.hardware.misys.common-V3-ndk.so|393176f11ad0458d589a8bf7c45c6767455ce386
+vendor/lib64/vendor.xiaomi.hardware.blackbox-V1-ndk.so|c29bd353cb9e786831530c3de0b3bf0f83d1a5da

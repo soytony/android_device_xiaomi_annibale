@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: Apache-2.0
+android_app_import {
+    name: "AnnibaleMiuiCamera",
+    apk: "//vendor/xiaomi/annibale:annibale_miuicamera_apk",
+    filename: "MiuiCamera.apk",
+    certificate: "platform",
+    privileged: true,
+    system_ext_specific: true,
+    uses_libs: ["annibale-miui-camera-framework"],
+    optional_uses_libs: [
+        "miui-cameraopt",
+        "com.android.extensions.appfunctions",
+        "androidx.window.extensions",
+        "androidx.window.sidecar",
+    ],
+    required: [
+        "annibale-miui-camera-framework",
+        "annibale-miui-camera-framework-permissions",
+        "annibale-miui-camera-privapp-permissions",
+        "annibale-miui-camera-sysconfig",
+    ],
+}
+prebuilt_etc {
+    name: "annibale-miui-camera-privapp-permissions",
+    src: "privapp-permissions-miui-camera.xml",
+    filename_from_src: true,
+    sub_dir: "permissions",
+    system_ext_specific: true,
+}
+prebuilt_etc {
+    name: "annibale-miui-camera-sysconfig",
+    src: "miui-camera.xml",
+    filename_from_src: true,
+    sub_dir: "sysconfig",
+    system_ext_specific: true,
+}
