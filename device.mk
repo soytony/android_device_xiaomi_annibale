@@ -305,7 +305,6 @@ PRODUCT_PACKAGES += \
     FrameworksResCommon \
     FrameworksResOverlayEsim \
     FrameworksResAnnibale \
-    LineageApertureOverlay \
     LineageSDKOverlay \
     LineageSettingsOverlay \
     NfcOverlayAnnibale \

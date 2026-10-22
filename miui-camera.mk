@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Keep Aperture during hardware validation. Disable this switch for the baseline camera set.
+# Disable this switch to omit the stock MIUI Camera package set.
 TARGET_INCLUDE_ANNIBALE_MIUI_CAMERA ?= true
 ifeq ($(TARGET_INCLUDE_ANNIBALE_MIUI_CAMERA),true)
 PRODUCT_PACKAGES += \

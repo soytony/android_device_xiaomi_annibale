@@ -10,6 +10,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 # Inherit from generic device
 $(call inherit-product, device/xiaomi/annibale/device.mk)
 
+# Stock MIUI Camera is bundled, so do not inherit Lineage Aperture.
+PRODUCT_NO_CAMERA := true
+
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
