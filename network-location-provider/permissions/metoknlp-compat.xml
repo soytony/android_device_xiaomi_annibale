@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Stock Metok geocoder uses hidden provider Binder APIs. Scope compatibility
+     to this system package; retain the stock APK signature and global policy. -->
+<config>
+    <hidden-api-whitelisted-app package="com.xiaomi.metoknlp" />
+</config>

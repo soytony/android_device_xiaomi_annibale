@@ -516,3 +516,10 @@ $(call inherit-product, $(LOCAL_PATH)/lunaris-dolby.mk)
 
 # HyperOS Camera with device-scoped compatibility APIs.
 $(call inherit-product, $(LOCAL_PATH)/miui-camera.mk)
+
+# Regional network location: static broker and user-started diagnostics.
+PRODUCT_PACKAGES += \
+    MetokNLP \
+    NetworkLocationProviderBroker \
+    NetworkLocationProviderBrokerOverlay \
+    NetworkLocationProviderSwitcher

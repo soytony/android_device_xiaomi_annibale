@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: Apache-2.0
+android_app_import {
+    name: "MetokNLP",
+    apk: "prebuilt/MetokNLP.apk",
+    presigned: true,
+    preprocessed: true,
+    // Stock APK has compressed DEX. Preserve its v2 signature rather than repacking it.
+    skip_preprocessed_apk_checks: true,
+    privileged: true,
+    product_specific: true,
+    uses_libs: ["com.android.location.provider"],
+    required: ["privapp-permissions-metoknlp", "default-permissions-metoknlp", "metoknlp-compat"],
+}
+
+android_app {
+    name: "NetworkLocationProviderBroker",
+    srcs: ["broker/src/**/*.java"],
+    manifest: "broker/AndroidManifest.xml",
+    platform_apis: true,
+    certificate: "platform",
+    privileged: true,
+    system_ext_specific: true,
+    optimize: { enabled: false },
+}
+prebuilt_etc {
+    name: "metoknlp-compat",
+    src: "permissions/metoknlp-compat.xml",
+    filename_from_src: true,
+    sub_dir: "sysconfig",
+    product_specific: true,
+}
+prebuilt_etc {
+    name: "privapp-permissions-metoknlp",
+    src: "permissions/privapp-permissions-metoknlp.xml",
+    filename_from_src: true,
+    sub_dir: "permissions",
+    product_specific: true,
+}
+prebuilt_etc {
+    name: "default-permissions-metoknlp",
+    src: "permissions/default-permissions-metoknlp.xml",
+    filename_from_src: true,
+    sub_dir: "default-permissions",
+    product_specific: true,
+}
