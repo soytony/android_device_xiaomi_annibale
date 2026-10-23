@@ -38,3 +38,6 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
 PRODUCT_SOURCE_ROOT_DIRS += \
     -device/xiaomi/sm8750-common \
     -vendor/xiaomi/sm8750-common
+
+# Apply local release trust policy after common config adds recovery keys.
+-include vendor/evolution-priv/keys/annibale-product.mk

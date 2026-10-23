@@ -260,3 +260,6 @@ WPA_SUPPLICANT_VERSION := VER_0_8_X
 
 # Inherit the proprietary files
 include vendor/xiaomi/annibale/BoardConfigVendor.mk
+
+# Optional local Evolution X release signing; public builds retain defaults.
+-include vendor/evolution-priv/keys/annibale-avb.mk
