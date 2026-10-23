@@ -307,6 +307,8 @@ PRODUCT_PACKAGES += \
     FrameworksResAnnibale \
     LineageSDKOverlay \
     LineageSettingsOverlay \
+    NetworkStackGoogleResMcc460 \
+    NetworkStackResMcc460 \
     NfcOverlayAnnibale \
     SecureElementResAnnibale \
     SettingsResCommon \
