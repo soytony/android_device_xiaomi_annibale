@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <!-- Physical display coordinates: 1156px wide, matching the framework
-         cutout circle at (0,82) with radius 38 after its horizontal centering. -->
-    <string name="config_frontBuiltInDisplayCutoutProtection" translatable="false">M 540,82 a 38,38 0 1 0 76,0 a 38,38 0 1 0 -76,0 Z</string>
+         cutout circle at (0,81) with radius 36 after its horizontal centering. -->
+    <string name="config_frontBuiltInDisplayCutoutProtection" translatable="false">M 542,81 a 36,36 0 1 0 72,0 a 36,36 0 1 0 -72,0 Z</string>
 </resources>

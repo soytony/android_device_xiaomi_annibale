@@ -16,7 +16,7 @@
     <!-- Default paddings for content around the corners. -->
     <dimen name="rounded_corner_content_padding">14dp</dimen>
     <dimen name="status_bar_height_landscape">24.0dp</dimen>
-    <dimen name="status_bar_height_portrait">164.0px</dimen>
+    <dimen name="status_bar_height_portrait">162.0px</dimen>
     <!-- the padding on the top of the statusbar, should be added to the overlay
     for SystemUI as well. -->
     <dimen name="status_bar_padding_top">0px</dimen>

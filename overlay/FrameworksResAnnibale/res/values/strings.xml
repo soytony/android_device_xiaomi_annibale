@@ -1,9 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <!-- Physical front-camera hole: display center X, center Y 82 px, radius 38 px. -->
-    <string name="config_mainBuiltInDisplayCutout">M 38,82 A 38,38 0 0 1 0,120 A 38,38 0 0 1 -38,82 A 38,38 0 0 1 0,44 A 38,38 0 0 1 38,82 Z</string>
+    <!-- Physical front-camera hole: display center X, center Y 81 px, radius 36 px. -->
+    <string name="config_mainBuiltInDisplayCutout">M 36,81 A 36,36 0 0 1 0,117 A 36,36 0 0 1 -36,81 A 36,36 0 0 1 0,45 A 36,36 0 0 1 36,81 Z</string>
+    <!-- Native panel shape measured from DisplayInfo: 1156x2510, 172px corners. -->
+    <string name="config_mainDisplayShape" translatable="false">M172,0 H984 A172,172 0 0 1 1156,172 V2338 A172,172 0 0 1 984,2510 H172 A172,172 0 0 1 0,2338 V172 A172,172 0 0 1 172,0 Z</string>
     <!-- Keep the larger logical exclusion area used to align status-bar content. -->
-    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -38,0 L 38,0 L 38,164 L -38,164 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -38,0 L 38,0 L 38,162 L -38,162 Z</string>
     <!-- Use a compact separator between multiple SIM carrier names on keyguard. -->
     <string name="kg_text_message_separator" translatable="false"> | </string>
 
