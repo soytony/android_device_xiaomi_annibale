@@ -1,0 +1,429 @@
+From e0cdd3338ff29979c03607f41c46ac7adcc21ad8 Mon Sep 17 00:00:00 2001
+From: tonyfan <waterwet@outlook.com>
+Date: Tue, 20 Oct 2026 13:21:53 +0800
+Subject: [PATCH] fix(telephony): recognize advanced NR signals
+
+Normalize Motorola NR_CA registration and accept per-phone modem icon
+hints without changing registration aggregation flags. Retain carrier
+restrictions and clear hints on radio-off or loss of NR service.
+
+Add registration and display-policy regression coverage.
+---
+ .../telephony/CellularNetworkService.java     |  16 +-
+ .../telephony/DisplayInfoController.java      |   5 +
+ .../telephony/NetworkTypeController.java      |  39 ++++-
+ .../telephony/CellularNetworkServiceTest.java |  56 +++++++
+ .../telephony/NetworkTypeControllerTest.java  | 148 ++++++++++++++++++
+ 5 files changed, 257 insertions(+), 7 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/CellularNetworkService.java b/src/java/com/android/internal/telephony/CellularNetworkService.java
+index 39ec1fe7f6..15a155106c 100644
+--- a/src/java/com/android/internal/telephony/CellularNetworkService.java
++++ b/src/java/com/android/internal/telephony/CellularNetworkService.java
+@@ -81,6 +81,9 @@ public class CellularNetworkService extends NetworkService {
+     // From 24.008 6.1.3.0 and 10.5.6.2 the maximum number of PDP Contexts is 16.
+     private static final int MAX_DATA_CALLS = 16;
+ 
++    // Private Motorola extension; keep it out of the standard network-type API.
++    private static final int MOTO_RIL_RADIO_TECHNOLOGY_NR_CA = 30;
++
+     private static final Map<Class<? extends CellIdentity>, List<Integer>> sNetworkTypes;
+ 
+     static {
+@@ -467,7 +470,9 @@ public class CellularNetworkService extends NetworkService {
+                             "RIL Missing Reg Fail Reason", mPhone.getCarrierId());
+             }
+ 
+-            int networkType = ServiceState.rilRadioTechnologyToNetworkType(regResult.rat);
++            final boolean isMotoNrCa = regResult.rat == MOTO_RIL_RADIO_TECHNOLOGY_NR_CA;
++            int networkType = isMotoNrCa ? TelephonyManager.NETWORK_TYPE_NR
++                    : ServiceState.rilRadioTechnologyToNetworkType(regResult.rat);
+             if (networkType == TelephonyManager.NETWORK_TYPE_LTE_CA) {
+                 networkType = TelephonyManager.NETWORK_TYPE_LTE;
+             }
+@@ -550,17 +555,19 @@ public class CellularNetworkService extends NetworkService {
+             }
+ 
+             // build the result based on the domain for the request
++            NetworkRegistrationInfo registrationInfo;
+             switch (domain) {
+                 case NetworkRegistrationInfo.DOMAIN_CS:
+-                    return new NetworkRegistrationInfo(domain, transportType, regState,
++                    registrationInfo = new NetworkRegistrationInfo(domain, transportType, regState,
+                             networkType, reasonForDenial, isEmergencyOnly, availableServices,
+                             cellIdentity, rplmn, cssSupported, roamingIndicator, systemIsInPrl,
+                             defaultRoamingIndicator);
++                    break;
+                 default:
+                     loge("Unknown domain passed to CellularNetworkService= " + domain);
+                     // fall through
+                 case NetworkRegistrationInfo.DOMAIN_PS:
+-                    return new NetworkRegistrationInfo.Builder()
++                    registrationInfo = new NetworkRegistrationInfo.Builder()
+                         .setDomain(domain)
+                         .setTransportType(transportType)
+                         .setRegistrationState(regState)
+@@ -583,7 +590,10 @@ public class CellularNetworkService extends NetworkService {
+                                      .setLteAttachExtraInfo(lteAttachExtraInfo)
+                                      .build())
+                         .build();
++                    break;
+             }
++            registrationInfo.setIsUsingCarrierAggregation(isMotoNrCa);
++            return registrationInfo;
+         }
+ 
+         private @NonNull NetworkRegistrationInfo getNetworkRegistrationInfo1_6(
+diff --git a/src/java/com/android/internal/telephony/DisplayInfoController.java b/src/java/com/android/internal/telephony/DisplayInfoController.java
+index b1fe5a81e2..aa04117f38 100644
+--- a/src/java/com/android/internal/telephony/DisplayInfoController.java
++++ b/src/java/com/android/internal/telephony/DisplayInfoController.java
+@@ -128,6 +128,11 @@ public class DisplayInfoController extends Handler {
+         mNetworkTypeController.registerForSatelliteNetwork();
+     }
+ 
++    /** Accept a device modem icon hint while retaining normal carrier/display policy. */
++    public void setModemNrAdvanced(boolean advanced) {
++        mNetworkTypeController.setModemNrAdvanced(advanced);
++    }
++
+     /**
+      * @return the current TelephonyDisplayInfo
+      */
+diff --git a/src/java/com/android/internal/telephony/NetworkTypeController.java b/src/java/com/android/internal/telephony/NetworkTypeController.java
+index 947a562f41..f74f5c305c 100644
+--- a/src/java/com/android/internal/telephony/NetworkTypeController.java
++++ b/src/java/com/android/internal/telephony/NetworkTypeController.java
+@@ -128,9 +128,13 @@ public class NetworkTypeController extends StateMachine {
+     /** Event for update request for satellite bandwidth constrained status */
+     private static final int EVENT_UPDATE_BANDWIDTH_CONSTRAINED_STATUS = 15;
+ 
++    private static final int EVENT_MODEM_NR_ADVANCED_CHANGED = 16;
++    private boolean mModemNrAdvanced;
++
+     private static final String[] sEvents =
+-            new String[EVENT_UPDATE_BANDWIDTH_CONSTRAINED_STATUS + 1];
++            new String[EVENT_MODEM_NR_ADVANCED_CHANGED + 1];
+     static {
++        sEvents[EVENT_MODEM_NR_ADVANCED_CHANGED] = "EVENT_MODEM_NR_ADVANCED_CHANGED";
+         sEvents[EVENT_UPDATE] = "EVENT_UPDATE";
+         sEvents[EVENT_QUIT] = "EVENT_QUIT";
+         sEvents[EVENT_SERVICE_STATE_CHANGED] = "EVENT_SERVICE_STATE_CHANGED";
+@@ -313,6 +317,11 @@ public class NetworkTypeController extends StateMachine {
+     }
+ 
+ 
++    /** Device telephony providers may supply an advanced icon hint, never a CA claim. */
++    public void setModemNrAdvanced(boolean advanced) {
++        sendMessage(EVENT_MODEM_NR_ADVANCED_CHANGED, advanced ? 1 : 0);
++    }
++
+     private void updateBandwidthConstrainedStatus(boolean isConstrained) {
+         if (isConstrained != mIsSatelliteConstrainedData) {
+             mIsSatelliteConstrainedData = isConstrained;
+@@ -834,6 +843,7 @@ public class NetworkTypeController extends StateMachine {
+                     updateOverrideNetworkType();
+                     break;
+                 case EVENT_RADIO_OFF_OR_UNAVAILABLE:
++                    mModemNrAdvanced = false;
+                     if (DBG) log("Reset timers since radio is off or unavailable.");
+                     resetAllTimers();
+                     mRatchetedNrBands.clear();
+@@ -858,6 +868,11 @@ public class NetworkTypeController extends StateMachine {
+                     }
+                     transitionToCurrentState();
+                     break;
++                case EVENT_MODEM_NR_ADVANCED_CHANGED:
++                    mModemNrAdvanced = msg.arg1 != 0;
++                    resetAllTimers();
++                    transitionToCurrentState();
++                    break;
+                 case EVENT_MODEM_DISPLAY_NETWORK_TYPE_OVERRIDE:
+                     if (!mUseModemDisplayNetworkType) break;
+                     ar = (AsyncResult) msg.obj;
+@@ -1424,6 +1439,11 @@ public class NetworkTypeController extends StateMachine {
+             resetAllTimers();
+         }
+         mServiceState = ss;
++        if (getRawDataNetworkType() != TelephonyManager.NETWORK_TYPE_NR
++                && !(isLte(getRawDataNetworkType()) && mServiceState.getNrState()
++                    == NetworkRegistrationInfo.NR_STATE_CONNECTED)) {
++            mModemNrAdvanced = false;
++        }
+         if (DBG) log("ServiceState updated: " + mServiceState);
+     }
+ 
+@@ -1867,9 +1887,19 @@ public class NetworkTypeController extends StateMachine {
+             return false;
+         }
+ 
+-        // If all above tests passed, then check if the device is using millimeter wave bands or
+-        // carrier designated bands.
+-        return isNrMmwave() || isAdditionalNrAdvancedBand(bands);
++        // NR registration can explicitly report aggregation (e.g. normalized Motorola NR_CA).
++        // Use PS/WWAN registration, not ServiceState's aggregate/forced LTE CA indication.
++        NetworkRegistrationInfo nri = mServiceState.getNetworkRegistrationInfo(
++                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
++        boolean nrCarrierAggregation = nri != null
++                && nri.getAccessNetworkTechnology() == TelephonyManager.NETWORK_TYPE_NR
++                && nri.isUsingCarrierAggregation();
++        boolean modemAdvanced = mModemNrAdvanced
++                && (getRawDataNetworkType() == TelephonyManager.NETWORK_TYPE_NR
++                    || (isLte(getRawDataNetworkType()) && mServiceState.getNrState()
++                        == NetworkRegistrationInfo.NR_STATE_CONNECTED));
++        return nrCarrierAggregation || modemAdvanced
++                || isNrMmwave() || isAdditionalNrAdvancedBand(bands);
+     }
+ 
+     private boolean isNrMmwave() {
+@@ -1969,6 +1999,7 @@ public class NetworkTypeController extends StateMachine {
+         pw.println("mIncludeLteForNrAdvancedThresholdBandwidth="
+                 + mIncludeLteForNrAdvancedThresholdBandwidth);
+         pw.println("mRatchetPccFieldsForSameAnchorNrCell=" + mRatchetPccFieldsForSameAnchorNrCell);
++        pw.println("mModemNrAdvanced=" + mModemNrAdvanced);
+         pw.println("mUseModemDisplayNetworkType=" + mUseModemDisplayNetworkType);
+         pw.println("mRatchetedNrBandwidths=" + mRatchetedNrBandwidths);
+         pw.println("mAdditionalNrAdvancedBandsList=" + mAdditionalNrAdvancedBands);
+diff --git a/tests/telephonytests/src/com/android/internal/telephony/CellularNetworkServiceTest.java b/tests/telephonytests/src/com/android/internal/telephony/CellularNetworkServiceTest.java
+index c970db06ec..b5a52bf417 100644
+--- a/tests/telephonytests/src/com/android/internal/telephony/CellularNetworkServiceTest.java
++++ b/tests/telephonytests/src/com/android/internal/telephony/CellularNetworkServiceTest.java
+@@ -63,6 +63,7 @@ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.junit.runners.Parameterized;
+ import org.junit.runners.Parameterized.Parameters;
++import org.mockito.ArgumentCaptor;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
+@@ -141,6 +142,61 @@ public class CellularNetworkServiceTest extends TelephonyTest {
+         super.tearDown();
+     }
+ 
++    @Test
++    public void testAidlMotoNrCaPreservesAggregation() throws RemoteException {
++        assertAidlRadioTechnology(30, TelephonyManager.NETWORK_TYPE_NR, true);
++    }
++
++    @Test
++    public void testAidlStandardNrDoesNotImplyAggregation() throws RemoteException {
++        assertAidlRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_NR,
++                TelephonyManager.NETWORK_TYPE_NR, false);
++    }
++
++    @Test
++    public void testAidlLteUnchanged() throws RemoteException {
++        assertAidlRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_LTE,
++                TelephonyManager.NETWORK_TYPE_LTE, false);
++    }
++
++    @Test
++    public void testAidlLteCaNormalizationUnchanged() throws RemoteException {
++        assertAidlRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_LTE_CA,
++                TelephonyManager.NETWORK_TYPE_LTE, false);
++    }
++
++    @Test
++    public void testAidlOtherUnknownRatRemainsUnknown() throws RemoteException {
++        assertAidlRadioTechnology(31, TelephonyManager.NETWORK_TYPE_UNKNOWN, false);
++    }
++
++    private void assertAidlRadioTechnology(int rat, int expectedNetworkType,
++            boolean expectedAggregation) throws RemoteException {
++        android.hardware.radio.network.RegStateResult result =
++                new android.hardware.radio.network.RegStateResult();
++        result.regState = NetworkRegistrationInfo.REGISTRATION_STATE_HOME;
++        result.rat = rat;
++        result.cellIdentity = new android.hardware.radio.network.CellIdentity();
++        result.registeredPlmn = "";
++        result.accessTechnologySpecificInfo =
++                android.hardware.radio.network.AccessTechnologySpecificInfo.noinit(false);
++        mSimulatedCommands.setVoiceRegStateResult(result);
++        mSimulatedCommands.setDataRegStateResult(result);
++
++        for (int domain : new int[] {NetworkRegistrationInfo.DOMAIN_CS,
++                NetworkRegistrationInfo.DOMAIN_PS}) {
++            INetworkServiceCallback callback = mock(INetworkServiceCallback.class);
++            ArgumentCaptor<NetworkRegistrationInfo> info =
++                    ArgumentCaptor.forClass(NetworkRegistrationInfo.class);
++            mBinder.requestNetworkRegistrationInfo(0, domain, callback);
++            verify(callback, timeout(1000)).onRequestNetworkRegistrationInfoComplete(
++                    eq(NetworkServiceCallback.RESULT_SUCCESS), info.capture());
++            assertEquals(domain, info.getValue().getDomain());
++            assertEquals(expectedNetworkType, info.getValue().getAccessNetworkTechnology());
++            assertEquals(expectedAggregation, info.getValue().isUsingCarrierAggregation());
++        }
++    }
++
+     @Test
+     @MediumTest
+     public void testGetNetworkRegistrationInfo() {
+diff --git a/tests/telephonytests/src/com/android/internal/telephony/NetworkTypeControllerTest.java b/tests/telephonytests/src/com/android/internal/telephony/NetworkTypeControllerTest.java
+index e939dcb532..12829045e7 100644
+--- a/tests/telephonytests/src/com/android/internal/telephony/NetworkTypeControllerTest.java
++++ b/tests/telephonytests/src/com/android/internal/telephony/NetworkTypeControllerTest.java
+@@ -35,6 +35,7 @@ import android.os.IThermalService;
+ import android.os.Looper;
+ import android.os.PersistableBundle;
+ import android.os.PowerManager;
++import android.telephony.AccessNetworkConstants;
+ import android.telephony.CarrierConfigManager;
+ import android.telephony.CellInfo;
+ import android.telephony.NetworkRegistrationInfo;
+@@ -185,6 +186,153 @@ public class NetworkTypeControllerTest extends TelephonyTest {
+                 mNetworkTypeController.getOverrideNetworkType());
+     }
+ 
++    @Test
++    public void testUpdateOverrideNetworkTypeNrSaCarrierAggregation() throws Exception {
++        setNrSaCarrierAggregation();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED,
++                mNetworkTypeController.getOverrideNetworkType());
++
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(false);
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testNrSaDoesNotUseServiceStateAggregationOverride() throws Exception {
++        setNrSaCarrierAggregation();
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(false);
++        doReturn(true).when(mServiceState).isUsingCarrierAggregation();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testLteAggregationDoesNotImplyNrAdvanced() throws Exception {
++        setNrSaCarrierAggregation();
++        mNetworkRegistrationInfo.setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE);
++        doReturn(NetworkRegistrationInfo.NR_STATE_CONNECTED).when(mServiceState).getNrState();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testNrSaAggregationRespectsRoamingRestriction() throws Exception {
++        setNrSaCarrierAggregation();
++        mBundle.putBoolean(CarrierConfigManager.KEY_ENABLE_NR_ADVANCED_WHILE_ROAMING_BOOL, false);
++        sendCarrierConfigChanged();
++        doReturn(true).when(mServiceState).getDataRoaming();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testNrSaAggregationRespectsPcoRestriction() throws Exception {
++        setNrSaCarrierAggregation();
++        mBundle.putInt(CarrierConfigManager.KEY_NR_ADVANCED_CAPABLE_PCO_ID_INT, 0xFF03);
++        sendCarrierConfigChanged();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testNrSaAggregationRespectsBandwidthThreshold() throws Exception {
++        setNrSaCarrierAggregation();
++        mBundle.putInt(CarrierConfigManager.KEY_NR_ADVANCED_THRESHOLD_BANDWIDTH_KHZ_INT, 20000);
++        sendCarrierConfigChanged();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testModemAdvancedHintOnNrSaClearsWithoutChangingCa() throws Exception {
++        setNrSaCarrierAggregation();
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(false);
++        mNetworkTypeController.setModemNrAdvanced(true);
++        processAllMessages();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED,
++                mNetworkTypeController.getOverrideNetworkType());
++        assertEquals(false, mNetworkRegistrationInfo.isUsingCarrierAggregation());
++        mNetworkTypeController.setModemNrAdvanced(false);
++        processAllMessages();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testModemAdvancedHintRequiresNrConnection() throws Exception {
++        setNrSaCarrierAggregation();
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(false);
++        mNetworkRegistrationInfo.setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE);
++        doReturn(NetworkRegistrationInfo.NR_STATE_NONE).when(mServiceState).getNrState();
++        mNetworkTypeController.setModemNrAdvanced(true);
++        processAllMessages();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testModemAdvancedHintRespectsCarrierRestrictions() throws Exception {
++        setNrSaCarrierAggregation();
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(false);
++        mBundle.putBoolean(CarrierConfigManager.KEY_ENABLE_NR_ADVANCED_WHILE_ROAMING_BOOL, false);
++        sendCarrierConfigChanged();
++        doReturn(true).when(mServiceState).getDataRoaming();
++        mNetworkTypeController.setModemNrAdvanced(true);
++        processAllMessages();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testModemAdvancedHintOnNrNsa() throws Exception {
++        setNrSaCarrierAggregation();
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(false);
++        mNetworkRegistrationInfo.setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE);
++        doReturn(NetworkRegistrationInfo.NR_STATE_CONNECTED).when(mServiceState).getNrState();
++        mNetworkTypeController.setModemNrAdvanced(true);
++        processAllMessages();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    @Test
++    public void testModemAdvancedHintClearedByRadioOff() throws Exception {
++        setNrSaCarrierAggregation();
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(false);
++        mNetworkTypeController.setModemNrAdvanced(true);
++        processAllMessages();
++        mNetworkTypeController.sendMessage(9 /* EVENT_RADIO_OFF_OR_UNAVAILABLE */);
++        processAllMessages();
++        updateOverrideNetworkType();
++        assertEquals(TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE,
++                mNetworkTypeController.getOverrideNetworkType());
++    }
++
++    private void setNrSaCarrierAggregation() {
++        mNetworkRegistrationInfo = new NetworkRegistrationInfo.Builder()
++                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
++                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
++                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_NR)
++                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
++                .build();
++        mNetworkRegistrationInfo.setIsUsingCarrierAggregation(true);
++        doReturn(mNetworkRegistrationInfo).when(mServiceState).getNetworkRegistrationInfo(
++                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
++        doReturn(ServiceState.FREQUENCY_RANGE_LOW).when(mServiceState).getNrFrequencyRange();
++    }
++
+     @Test
+     public void testUpdateOverrideNetworkTypeNrSaMmwave() throws Exception {
+         // not NR
+-- 
+2.34.1
+

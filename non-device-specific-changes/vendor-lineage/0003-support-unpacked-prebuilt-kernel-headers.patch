@@ -1,0 +1,120 @@
+diff --git a/build/soong/Android.bp b/build/soong/Android.bp
+index 85df6f45..6d03b2d7 100644
+--- a/build/soong/Android.bp
++++ b/build/soong/Android.bp
+@@ -20,13 +20,14 @@ bootstrap_go_package {
+ 
+ lineage_generator {
+     name: "generated_kernel_includes",
++    prebuilt_header_dir: "$(TARGET_PREBUILT_KERNEL_HEADER_DIR)",
+ 
+     // The headers make command
+     cmd: "set -e; " +
+          "(cd $(KERNEL_BUILD_OUT_PREFIX).; " +
+          "if [ -n \"$(TARGET_PREBUILT_KERNEL_HEADERS)\" ]; then " +
+          "    mkdir -p $(genDir) || exit 1; " +
+-         "    (set -o pipefail; gzip -d < $(TARGET_PREBUILT_KERNEL_HEADERS) | tar -x -C $(genDir)) || exit 1; " +
++         "    (set -o pipefail; gzip -d < \"$(TARGET_PREBUILT_KERNEL_HEADERS)\" | tar -x -C $(genDir)) || exit 1; " +
+          "elif [ -n \"$(TARGET_KERNEL_PLATFORM_TARGET)\" ]; then " +
+          "    pushd $(KERNEL_PATH); " +
+          "    ./tools/bazel --output_user_root=$(KERNEL_BUILD_OUT_PREFIX)$(genDir)/bazel-out --output_root=$(KERNEL_BUILD_OUT_PREFIX)$(genDir)/bazel-out run --experimental_convenience_symlinks=ignore --cpu=$(KERNEL_ARCH) //$(TARGET_KERNEL_SOURCE):$(TARGET_KERNEL_PLATFORM_TARGET)_uapi_headers_dist -- --destdir=$(KERNEL_BUILD_OUT_PREFIX)$(genDir); " +
+diff --git a/build/soong/generator/generator.go b/build/soong/generator/generator.go
+index 5a24b934..cd9d5503 100644
+--- a/build/soong/generator/generator.go
++++ b/build/soong/generator/generator.go
+@@ -78,6 +78,10 @@ type generatorProperties struct {
+ 
+ 	// Declare list of files that should be used for timestamp dependency checking
+ 	Dep_files []string
++
++	// Optional unpacked UAPI header tree, relative to the source root. Each
++	// header is declared as an output so sbox retains the exported headers.
++	Prebuilt_header_dir *string
+ }
+ 
+ type Module struct {
+@@ -141,6 +145,11 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+ 		g.exportedSourceDirs = append(g.exportedSourceDirs, android.PathForModuleGen(ctx, ""))
+ 	}
+ 
++	if dir := lineageExpandVariables(ctx, String(g.properties.Prebuilt_header_dir)); dir != "" {
++		g.generatePrebuiltHeaders(ctx, dir)
++		return
++	}
++
+ 	tools := map[string]android.Path{}
+ 
+ 	if len(g.properties.Tools) > 0 {
+@@ -280,6 +289,58 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+ 	rule.Build("generator", "generate")
+ }
+ 
++// generatePrebuiltHeaders installs an already exported UAPI tree. Unlike a
++// kernel build, its complete output set is known before execution.
++func (g *Module) generatePrebuiltHeaders(ctx android.ModuleContext, dir string) {
++	headers, err := ctx.GlobWithDeps(filepath.Join(dir, "**/*.h"), nil)
++	if err != nil || len(headers) == 0 {
++		ctx.PropertyErrorf("prebuilt_header_dir", "no headers in %q: %v", dir, err)
++		return
++	}
++	genDir := android.PathForModuleGen(ctx)
++	rule := android.NewRuleBuilder(pctx, ctx).Sbox(genDir,
++		android.PathForModuleOut(ctx, "generator.sbox.textproto"))
++	cmd := rule.Command()
++	includeDir := genDir.Join(ctx, "usr/include")
++	cmd.Text("mkdir -p").Text(proptools.ShellEscape(cmd.PathForOutput(includeDir))).
++		Text("&& cp -R").Text(proptools.ShellEscape(dir + "/.")).
++		Text(proptools.ShellEscape(cmd.PathForOutput(includeDir)))
++	for _, header := range headers {
++		rel, err := filepath.Rel(dir, header)
++		if err != nil {
++			ctx.PropertyErrorf("prebuilt_header_dir", "%v", err)
++			return
++		}
++		cmd.Implicit(android.PathForSource(ctx, header)).
++			ImplicitOutput(genDir.Join(ctx, "usr/include", rel))
++	}
++	// clean_header.py imports these modules and loads clang-stable's bindings
++	// and shared library. All must be present inside the input sandbox.
++	for _, pattern := range []string{
++		"bionic/libc/kernel/tools/*.py",
++		"prebuilts/clang/host/linux-x86/clang-stable/lib/python3/site-packages/clang/*.py",
++		"prebuilts/clang/host/linux-x86/clang-stable/lib/libclang.so",
++		"vendor/lineage/tools/clean_headers.sh",
++	} {
++		paths, err := ctx.GlobWithDeps(pattern, nil)
++		if err != nil || len(paths) == 0 {
++			ctx.ModuleErrorf("missing header cleanup dependency %q: %v", pattern, err)
++			return
++		}
++		for _, path := range paths {
++			cmd.Implicit(android.PathForSource(ctx, path))
++		}
++	}
++	// Absolute paths avoid clean_header.py resolving its arguments beneath
++	// external/kernel-headers/original instead of the generated directory.
++	cmd.Text("&& vendor/lineage/tools/clean_headers.sh \"$(realpath").
++		Text(proptools.ShellEscape(cmd.PathForOutput(genDir))).Text(")\"")
++	dummyDep := genDir.Join(ctx, ".dummy_dep")
++	rule.Command().Text("touch").Output(dummyDep)
++	g.outputDeps = append(g.outputDeps, dummyDep)
++	rule.Build("generator", "install prebuilt kernel headers")
++}
++
+ func NewGenerator() *Module {
+ 	module := &Module{}
+ 	module.AddProperties(&module.properties)
+diff --git a/config/BoardConfigSoong.mk b/config/BoardConfigSoong.mk
+index 7b87ceef..288dcc8c 100644
+--- a/config/BoardConfigSoong.mk
++++ b/config/BoardConfigSoong.mk
+@@ -13,7 +13,8 @@ EXPORT_TO_SOONG := \
+     TARGET_KERNEL_SOURCE \
+     TARGET_KERNEL_PLATFORM_TARGET \
+     TARGET_MAX_PAGE_SIZE_SUPPORTED \
+-    TARGET_PREBUILT_KERNEL_HEADERS
++    TARGET_PREBUILT_KERNEL_HEADERS \
++    TARGET_PREBUILT_KERNEL_HEADER_DIR
+ 
+ # Setup SOONG_CONFIG_* vars to export the vars listed above.
+ # Documentation here:

@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "branch": "cnb",
+  "date": "2026-10-20",
+  "repositories": [
+    {
+      "repo": "vendor/lineage",
+      "base_commit": "72104cd46a5e303e74e57977d5e995b9d4469b72",
+      "patches": [
+        {
+          "file": "vendor-lineage/0001-skip-empty-generator-dependencies.patch",
+          "commit": "465a5659f0b194a1a62df662a2ea8cec43ec2b49",
+          "subject": "build: skip empty generator dependencies",
+          "reason": "Inherited generator compatibility: an unset kernel path must not become an invalid dependency.",
+          "format": "mail"
+        },
+        {
+          "file": "vendor-lineage/0002-support-prebuilt-kernel-header-archives.patch",
+          "commit": "baa3dd91178e50dccbdd23064d5e143cf3f8956f",
+          "subject": "build: support prebuilt kernel header archives",
+          "reason": "Inherited prerequisite for the generated kernel header provider; keep source/archive selection compatible.",
+          "format": "mail"
+        },
+        {
+          "file": "vendor-lineage/0003-support-unpacked-prebuilt-kernel-headers.patch",
+          "commit": null,
+          "subject": "build: support unpacked prebuilt kernel headers",
+          "reason": "Annibale exports a flat UAPI tree. Declare each sandbox output and cleanup dependency, use absolute cleanup paths, and quote the unused archive branch. Selected by TARGET_PREBUILT_KERNEL_HEADER_DIR; other paths keep existing selection.",
+          "format": "diff",
+          "source": "Uncommitted vendor/lineage working-tree snapshot on 2026-10-20"
+        }
+      ],
+      "result_commit": null,
+      "snapshot_parent": "baa3dd91178e50dccbdd23064d5e143cf3f8956f",
+      "result_tree": "7abfa15c5d98250f0a5d0b41dc09bd05069c66d0"
+    },
+    {
+      "repo": "frameworks/opt/telephony",
+      "base_commit": "2a7c5f7541a1b286ff967eb67a34c7c984d01458",
+      "patches": [
+        {
+          "file": "frameworks-opt-telephony/0001-recognize-advanced-NR-signals.patch",
+          "commit": "e0cdd3338ff29979c03607f41c46ac7adcc21ad8",
+          "subject": "fix(telephony): recognize advanced NR signals",
+          "reason": "Consume modem advanced-icon hints through normal carrier policy; also normalize Motorola NR_CA registration. The Qualcomm adapter cannot alter private display policy from the device tree alone.",
+          "format": "mail"
+        }
+      ],
+      "result_commit": "e0cdd3338ff29979c03607f41c46ac7adcc21ad8",
+      "result_tree": "b5e3fdb1a602d796672c8991b1ab9c6f62fe2adf"
+    },
+    {
+      "repo": "packages/services/Telephony",
+      "base_commit": "b07a812762ff58516a7014c58d3b5b8b8819f19e",
+      "patches": [
+        {
+          "file": "packages-services-Telephony/0001-request-Qualcomm-telephony-access.patch",
+          "commit": "9e758a95482aa74645c9cdeab72dcf93a28a7a20",
+          "subject": "fix(phone): request Qualcomm telephony access",
+          "reason": "The phone process must explicitly request the Qualcomm service permission. Device resource overlays cannot add application uses-permission declarations.",
+          "format": "mail"
+        }
+      ],
+      "result_commit": "9e758a95482aa74645c9cdeab72dcf93a28a7a20",
+      "result_tree": "46d22bf6eb1088184a39c9770c1cfdacca2aabdc"
+    }
+  ]
+}

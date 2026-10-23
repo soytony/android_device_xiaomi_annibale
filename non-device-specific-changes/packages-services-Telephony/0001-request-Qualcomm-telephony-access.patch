@@ -1,0 +1,29 @@
+From 9e758a95482aa74645c9cdeab72dcf93a28a7a20 Mon Sep 17 00:00:00 2001
+From: tonyfan <waterwet@outlook.com>
+Date: Tue, 20 Oct 2026 13:21:53 +0800
+Subject: [PATCH] fix(phone): request Qualcomm telephony access
+
+Device-selected NR icon providers bind ExtTelephonyService from the
+phone process. The service requires an explicit permission request;
+a device privileged allowlist supplies the grant.
+---
+ AndroidManifest.xml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 9d357d2a1..b9741c746 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -31,6 +31,9 @@
+     <!-- Allows granting runtime permissions to telephony related components. -->
+     <uses-permission android:name="android.permission.GRANT_RUNTIME_PERMISSIONS_TO_TELEPHONY_DEFAULTS" />
+ 
++    <!-- Device-selected telephony providers may bind Qualcomm advanced NR reporting. -->
++    <uses-permission android:name="com.qualcomm.qti.permission.USE_EXT_TELEPHONY_SERVICE" />
++
+     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
+     <uses-permission android:name="android.permission.CALL_PHONE" />
+     <uses-permission android:name="android.permission.CALL_PRIVILEGED" />
+-- 
+2.34.1
+
