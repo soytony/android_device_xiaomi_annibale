@@ -56,7 +56,9 @@
             </point>
         </sdrHdrRatioMap>
     </highBrightnessMode>
-    <ambientLightHorizonLong>1500</ambientLightHorizonLong>
+    <!-- Keep enough history for the 3000 ms darkening debounce. A shorter
+         horizon continually advances the oldest sample and prevents dimming. -->
+    <ambientLightHorizonLong>4000</ambientLightHorizonLong>
     <ambientLightHorizonShort>1000</ambientLightHorizonShort>
     <idleScreenRefreshRateTimeout>
         <luxThresholds>
