@@ -9,4 +9,5 @@
     <!-- Use a compact separator between multiple SIM carrier names on keyguard. -->
     <string name="kg_text_message_separator" translatable="false"> | </string>
 
+    <string name="config_displayWhiteBalanceColorTemperatureSensorName" translatable="false">xiaomi.sensor.front_cct</string>
 </resources>
